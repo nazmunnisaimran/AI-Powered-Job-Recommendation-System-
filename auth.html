@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In / Join - CareerMatch AI{% endblock %}
+
+{% block content %}
+<div class="auth-section container">
+    <div class="auth-grid">
+        <div class="auth-hero fade-in">
+            <h1 class="auth-title">Land Your <span class="gradient-text">Dream Tech Job</span> with AI</h1>
+            <p class="auth-subtitle">Upload your resume, analyze your skills, discover structural gaps, and find tailored matches instantly using advanced semantic intelligence.</p>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                    <div class="feature-text">
+                        <h3>Instant Resume Parser</h3>
+                        <p>Automatically extract engineering skills from PDF resumes in seconds.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="feature-text">
+                        <h3>Smart Cosine Similarity</h3>
+                        <p>Match with jobs based on deep textual description overlap.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div class="feature-text">
+                        <h3>Skill Gap Remediation</h3>
+                        <p>Identify missing technologies and get customized course pathways.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-card-container fade-in">
+            <div class="glass-card auth-card">
+                <!-- Tab Headers -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn {% if active_tab == 'login' %}active{% endif %}" id="loginTabBtn" onclick="switchAuthTab('login')">Login</button>
+                    <button class="auth-tab-btn {% if active_tab == 'register' %}active{% endif %}" id="registerTabBtn" onclick="switchAuthTab('register')">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form action="{{ url_for('auth') }}" method="POST" class="auth-form {% if active_tab == 'login' %}active{% endif %}" id="loginForm">
+                    <input type="hidden" name="action" value="login">
+                    
+                    <div class="form-group">
+                        <label for="login_user"><i class="fa-solid fa-user"></i> Username or Email</label>
+                        <input type="text" id="login_user" name="username_or_email" placeholder="enter your username or email" value="{{ username_or_email or '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login_pass"><i class="fa-solid fa-lock"></i> Password</label>
+                        <input type="password" id="login_pass" name="password" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary w-100">
+                        <span>Log In</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form action="{{ url_for('auth') }}" method="POST" class="auth-form {% if active_tab == 'register' %}active{% endif %}" id="registerForm">
+                    <input type="hidden" name="action" value="register">
+                    
+                    <div class="form-group">
+                        <label for="reg_user"><i class="fa-solid fa-user-plus"></i> Username</label>
+                        <input type="text" id="reg_user" name="username" placeholder="johndoe" value="{{ username or '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg_email"><i class="fa-solid fa-envelope"></i> Email Address</label>
+                        <input type="email" id="reg_email" name="email" placeholder="john@example.com" value="{{ email or '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg_pass"><i class="fa-solid fa-lock"></i> Password</label>
+                        <input type="password" id="reg_pass" name="password" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg_pass_conf"><i class="fa-solid fa-shield-halved"></i> Confirm Password</label>
+                        <input type="password" id="reg_pass_conf" name="confirm_password" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary w-100">
+                        <span>Create Account</span> <i class="fa-solid fa-user-check"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

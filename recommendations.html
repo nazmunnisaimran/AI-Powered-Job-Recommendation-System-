@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Job Recommendations - CareerMatch AI{% endblock %}
+
+{% block content %}
+<div class="recs-section container">
+    <div class="recs-header fade-in">
+        <div>
+            <span class="badge">AI MATCH ENGINE</span>
+            <h1 class="page-title">Your Personalized <span class="gradient-text">Job Matches</span></h1>
+            <p class="page-subtitle">Showing job recommendations matched against your profile inventory of {{ skills_count }} skill tags.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    {% if recommendations %}
+        <div class="recs-layout">
+            <!-- Recommendations Left List -->
+            <div class="recs-list fade-in">
+                {% for rec in recommendations %}
+                    <div class="glass-card job-card {% if loop.first %}active{% endif %} fade-in" data-job-id="{{ rec.job_id }}" onclick="selectJobCard(this)">
+                        <div class="job-card-header">
+                            <div class="job-meta">
+                                <h3 class="job-title">{{ rec.title }}</h3>
+                                <span class="job-company"><i class="fa-solid fa-building"></i> {{ rec.company }}</span>
+                                <div class="job-tags">
+                                    <span class="job-tag"><i class="fa-solid fa-location-dot"></i> {{ rec.location }}</span>
+                                    <span class="job-tag"><i class="fa-solid fa-money-bill-wave"></i> {{ rec.salary }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Match Score Radial/Pill -->
+                            <div class="match-score-badge {% if rec.match_percentage >= 80 %}score-high{% elif rec.match_percentage >= 50 %}score-mid{% else %}score-low{% endif %}">
+                                <span class="score-num">{{ rec.match_percentage }}%</span>
+                                <span class="score-label">match</span>
+                            </div>
+                        </div>
+
+                        <!-- Skill overlap summaries -->
+                        <div class="job-skills-summary">
+                            <strong>Skills Required:</strong>
+                            <div class="pill-group mt-1">
+                                {% for skill in rec.required_skills %}
+                                    {% if skill.lower() in rec.missing_skills|map('lower') %}
+                                        <span class="pill-missing-sm" title="Missing from your profile">{{ skill }}</span>
+                                    {% else %}
+                                        <span class="pill-matched-sm" title="Matches your profile"><i class="fa-solid fa-check"></i> {{ skill }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Job and Recommendation Detailed View (Right Panel) -->
+            <div class="recs-detail-panel fade-in">
+                {% for rec in recommendations %}
+                    <div class="glass-card job-detail-content" id="job-detail-{{ rec.job_id }}" style="display: {% if loop.first %}block{% else %}none{% endif %};">
+                        
+                        <!-- Header Details -->
+                        <div class="detail-header">
+                            <div>
+                                <span class="badge badge-lg {% if rec.match_percentage >= 80 %}score-high-bg{% elif rec.match_percentage >= 50 %}score-mid-bg{% else %}score-low-bg{% endif %}">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> {{ rec.match_percentage }}% Match Score
+                                </span>
+                                <h2 class="detail-title mt-2">{{ rec.title }}</h2>
+                                <h3 class="detail-company"><i class="fa-solid fa-building"></i> {{ rec.company }}</h3>
+                                
+                                <div class="detail-meta-row mt-2">
+                                    <span><i class="fa-solid fa-location-dot"></i> {{ rec.location }}</span>
+                                    <span><i class="fa-solid fa-money-bill-wave"></i> {{ rec.salary }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab Options for detailed view -->
+                        <div class="detail-tabs">
+                            <button class="detail-tab-btn active" onclick="switchDetailTab(this, 'desc-{{ rec.job_id }}')">Job Description</button>
+                            <button class="detail-tab-btn" onclick="switchDetailTab(this, 'gap-{{ rec.job_id }}')">
+                                Skill Gap Analysis 
+                                {% if rec.missing_skills %}
+                                    <span class="tab-badge-warning">{{ rec.missing_skills|length }}</span>
+                                {% endif %}
+                            </button>
+                            <button class="detail-tab-btn" onclick="switchDetailTab(this, 'courses-{{ rec.job_id }}')">Learning Path</button>
+                        </div>
+
+                        <!-- Tab 1: Description -->
+                        <div class="detail-tab-pane" id="desc-{{ rec.job_id }}">
+                            <h4 class="section-heading">Overview</h4>
+                            <p class="job-description-text">{{ rec.description }}</p>
+                        </div>
+
+                        <!-- Tab 2: Skill Gap Analysis -->
+                        <div class="detail-tab-pane" id="gap-{{ rec.job_id }}" style="display: none;">
+                            <h4 class="section-heading">Skill Match Breakdown</h4>
+                            
+                            {% set total_req = rec.required_skills|length %}
+                            {% set missing_count = rec.missing_skills|length %}
+                            {% set matched_count = total_req - missing_count %}
+                            
+                            <div class="progress-container mt-2">
+                                <div class="progress-labels">
+                                    <span>Skills Match Rate</span>
+                                    <span>
+                                        {% if total_req > 0 %}
+                                            {{ ((matched_count / total_req) * 100)|round|int }}% ({{ matched_count }} of {{ total_req }} skills)
+                                        {% else %}
+                                            100% (No special skill tags listed)
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="progress-bar-bg">
+                                    <div class="progress-bar-fill" style="width: {% if total_req > 0 %}{{ (matched_count / total_req) * 100 }}{% else %}100{% endif %}%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="gap-grid mt-4">
+                                <div class="gap-col">
+                                    <h5 class="gap-title text-success"><i class="fa-solid fa-circle-check"></i> Matched Skills ({{ matched_count }})</h5>
+                                    <div class="pill-group mt-1">
+                                        {% for skill in rec.required_skills %}
+                                            {% if skill.lower() not in rec.missing_skills|map('lower') %}
+                                                <span class="pill-matched">{{ skill }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if matched_count == 0 %}
+                                            <span class="no-pills-text">No matching skills found.</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="gap-col">
+                                    <h5 class="gap-title text-danger"><i class="fa-solid fa-circle-xmark"></i> Missing Skills ({{ missing_count }})</h5>
+                                    <div class="pill-group mt-1">
+                                        {% for skill in rec.missing_skills %}
+                                            <span class="pill-missing">{{ skill }}</span>
+                                        {% endfor %}
+                                        {% if missing_count == 0 %}
+                                            <span class="no-pills-text text-success">Perfect profile match! You have all required skills.</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Learning Recommendations -->
+                        <div class="detail-tab-pane" id="courses-{{ rec.job_id }}" style="display: none;">
+                            <h4 class="section-heading">Upskilling Recommendations</h4>
+                            <p class="section-subheading">Close your skill gap with these curated online learning courses:</p>
+
+                            {% if rec.learning_paths %}
+                                <div class="learning-paths-list mt-3">
+                                    {% for path in rec.learning_paths %}
+                                        <div class="learning-skill-group">
+                                            <span class="learning-skill-title"><i class="fa-solid fa-graduation-cap"></i> Recommended for <span class="highlight-text">{{ path.skill }}</span></span>
+                                            
+                                            <div class="course-cards mt-2">
+                                                {% for course in path.courses %}
+                                                    <div class="course-card">
+                                                        <div class="course-info">
+                                                            <span class="course-platform">{{ course.platform }}</span>
+                                                            <h5 class="course-title">{{ course.title }}</h5>
+                                                        </div>
+                                                        <a href="{{ course.url }}" target="_blank" rel="noopener noreferrer" class="btn-course">
+                                                            <span>Explore Course</span> <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                                        </a>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="perfect-fit-congratulations mt-4">
+                                    <div class="congratulations-icon">
+                                        <i class="fa-solid fa-champagne-glasses"></i>
+                                    </div>
+                                    <h3>You are fully qualified!</h3>
+                                    <p>No skill gaps were detected for this role. You possess 100% of the required tech stack tags. Go ahead and apply!</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="glass-card no-jobs-card fade-in text-center py-5">
+            <i class="fa-solid fa-circle-nodes placeholder-icon"></i>
+            <h2>No Job Database Found</h2>
+            <p class="card-desc">It looks like the system's database has not been seeded with job postings. Please run the seed database script.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

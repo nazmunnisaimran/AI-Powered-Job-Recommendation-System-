@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - CareerMatch AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-section container">
+    <div class="dashboard-header fade-in">
+        <div>
+            <span class="badge">PRO PROFILE</span>
+            <h1 class="page-title">Welcome back, <span class="gradient-text">{{ g.user.username }}</span>!</h1>
+            <p class="page-subtitle">Upload your resume to extract key professional skills and trigger AI job recommendation matching.</p>
+        </div>
+        
+        {% if profile and (profile.skills or profile.extracted_text) %}
+            <a href="{{ url_for('recommendations') }}" class="btn-gradient pulse">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Get Recommendations</span>
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Resume Upload Zone (Left Column) -->
+        <div class="column-left fade-in">
+            <div class="glass-card upload-card">
+                <h2 class="card-title"><i class="fa-solid fa-file-arrow-up card-icon"></i> Upload Resume</h2>
+                <p class="card-desc">Only PDF resumes are supported. Max size 16MB.</p>
+                
+                <form action="{{ url_for('upload_resume') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="dropzone" id="dropzone">
+                        <input type="file" name="resume" id="resumeInput" accept=".pdf" required>
+                        <div class="dropzone-content">
+                            <div class="dropzone-icon">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <h3 class="dropzone-title">Drag & drop your PDF here</h3>
+                            <p class="dropzone-or">or click to browse files</p>
+                        </div>
+                        <div class="file-preview" id="filePreview" style="display: none;">
+                            <i class="fa-solid fa-file-pdf file-pdf-icon"></i>
+                            <span class="file-name" id="selectedFileName">filename.pdf</span>
+                            <button type="button" class="btn-clear-file" id="clearFileBtn" title="Clear selection">&times;</button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary w-100" id="btnSubmitUpload" disabled>
+                        <span>Parse and Extract Skills</span> <i class="fa-solid fa-circle-notch fa-spin spinner" style="display: none;"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Profile Summary & Resume Stats (Left Column Bottom) -->
+            {% if profile and profile.resume_filename %}
+            <div class="glass-card stats-card fade-in">
+                <h2 class="card-title"><i class="fa-solid fa-address-card card-icon"></i> Resume File Details</h2>
+                <div class="stats-list">
+                    <div class="stats-item">
+                        <span class="label">Uploaded Resume:</span>
+                        <span class="value text-truncate" title="{{ profile.resume_filename }}"><i class="fa-solid fa-file-pdf text-danger"></i> {{ profile.resume_filename }}</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="label">Last Parsed:</span>
+                        <span class="value">{{ profile.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="label">Total Skills Extracted:</span>
+                        <span class="value badge-count">
+                            {% if profile.skills %}
+                                {{ profile.skills.split(',')|length }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Skills Management (Right Column) -->
+        <div class="column-right fade-in">
+            <div class="glass-card skills-card">
+                <div class="skills-card-header">
+                    <div>
+                        <h2 class="card-title"><i class="fa-solid fa-laptop-code card-icon"></i> Extracted Skills Inventory</h2>
+                        <p class="card-desc">These skills were extracted from your resume. You can add or remove tags to refine job suggestions.</p>
+                    </div>
+                </div>
+
+                <!-- Skill Pill Area -->
+                <div class="skills-container" id="skillsContainer">
+                    {% if skills %}
+                        {% for skill in skills %}
+                            <div class="skill-pill fade-in" data-skill="{{ skill }}">
+                                <span>{{ skill }}</span>
+                                <button type="button" class="skill-remove-btn" onclick="removeSkill('{{ skill }}')">&times;</button>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-skills" id="noSkillsPlaceholder">
+                            <i class="fa-solid fa-tags placeholder-icon"></i>
+                            <h3>No skills parsed yet</h3>
+                            <p>Upload a PDF resume to populate your skills inventory, or add skills manually below.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Add Skill Interface -->
+                <div class="add-skill-box">
+                    <div class="input-action-group">
+                        <input type="text" id="newSkillInput" placeholder="Add custom skill (e.g. Docker, Vue.js, PyTorch)">
+                        <button type="button" class="btn-secondary" id="btnAddSkill">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    </div>
+                </div>
+                
+                {% if skills %}
+                    <div class="save-skills-bar fade-in" id="saveSkillsBar" style="display: none;">
+                        <span class="save-msg"><i class="fa-solid fa-circle-info"></i> Unsaved changes to your skills.</span>
+                        <button type="button" class="btn-success-sm" id="btnSaveSkills">
+                            <span>Save Changes</span> <i class="fa-solid fa-floppy-disk"></i>
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
